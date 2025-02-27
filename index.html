@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/main.css">
+    <script src="js/vue.js"></script>
+    <title>StockCalc</title>
+</head>
+
+<body>
+    <div id="app">
+        <div class="frame">
+            <h5>股票質押質借維持率計算機</h5>
+            <table>
+                <tr>
+                    <th>質押張數</th>
+                    <td><input placeholder="填入張數" type="number" v-model="entry.shares"
+                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
+                    <th>收盤價</th>
+                    <td><input placeholder="填入收盤價" type="number" v-model="entry.closing"
+                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
+                    <th>市值(萬)</th>
+                    <td>{{show.market.toFixed(2)}}</td>
+                </tr>
+                <tr>
+                    <th>最大質借金額(萬)</th>
+                    <td>{{show.maxloan.toFixed(2)}}</td>
+                    <th>質借金額(萬)</th>
+                    <td><input placeholder="填入質借金額" type="number" v-model="entry.pledge"
+                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
+                    <th>維持率</th>
+                    <td>{{show.maintain.toFixed(2)}}%</td>
+                </tr>
+                <tr>
+                    <th>維持率160%最低市值(萬)</th>
+                    <td>{{show.lowest160_market.toFixed(2)}}</td>
+                    <th>最低股價</th>
+                    <td>{{show.lowest160_price.toFixed(1)}}</td>
+                    <th>低於160%</th>
+                    <td class="col-r">無法借新還舊</td>
+                </tr>
+                <tr>
+                    <th>維持率140%最低市值(萬)</th>
+                    <td>{{show.lowest140_market.toFixed(2)}}</td>
+                    <th>最低股價</th>
+                    <td>{{show.lowest140_price.toFixed(1)}}</td>
+                    <th>低於140%</th>
+                    <td class="col-r">面臨追繳</td>
+                </tr>
+                <tr>
+                    <th>質押年利率(%)</th>
+                    <td><input placeholder="填入年利率" type="number" v-model="entry.apr"
+                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
+                    <th>質借年利息(萬)</th>
+                    <td colspan="3">{{show.interest.toFixed(2)}}</td>
+                </tr>
+            </table>
+            <div class="clear" @click="clear()">清空</div>
+        </div>
+    </div>
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        createApp({
+            setup() {
+                // 輸入框參數綁定
+                const entry = ref({
+                    shares: '',
+                    closing: '',
+                    pledge: '',
+                    apr: ''
+                });
+
+                // 計算後參數綁定
+                const show = ref({
+                    market: 0,
+                    maxloan: 0,
+                    maintain: 0,
+                    lowest160_market: 0,
+                    lowest160_price: 0,
+                    lowest140_market: 0,
+                    lowest140_price: 0,
+                    interest: 0
+                });
+
+                // 清除資料
+                function clear(channel, userDevice) {
+                    Object.keys(entry.value).forEach(key => {
+                        entry.value[key] = '';
+                    });
+                    Object.keys(show.value).forEach(key => {
+                        show.value[key] = 0;
+                    });
+                }
+
+                // 計算
+                function calc() {
+                    const shares = entry.value.shares || 0;
+                    const closing = entry.value.closing || 0;
+                    const pledge = entry.value.pledge || 0;
+                    const apr = entry.value.apr || 0;
+
+                    const marketValue = shares * closing * 0.1;
+                    const maxLoan = marketValue * 0.6;
+                    const maintainRate = pledge > 0 ? (marketValue / pledge) * 100 : 0;
+
+                    const lowestMarketValue160 = pledge * 1.6;
+                    const lowestMarketValue140 = pledge * 1.4;
+
+                    const lowestPrice160 = shares > 0 ? lowestMarketValue160 / (shares * 0.1) : 0;
+                    const lowestPrice140 = shares > 0 ? lowestMarketValue140 / (shares * 0.1) : 0;
+
+                    const annualInterest = pledge * apr / 100;
+
+                    show.value.market = marketValue;
+                    show.value.maxloan = maxLoan;
+                    show.value.maintain = maintainRate;
+                    show.value.lowest160_market = lowestMarketValue160;
+                    show.value.lowest160_price = lowestPrice160;
+                    show.value.lowest140_market = lowestMarketValue140;
+                    show.value.lowest140_price = lowestPrice140;
+                    show.value.interest = annualInterest;
+                }
+
+                onMounted(async () => { });
+                return {
+                    entry,
+                    show,
+                    clear,
+                    calc
+                };
+            },
+        }).mount("#app");
+    </script>
+</body>
+
+</html>
