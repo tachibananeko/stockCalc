@@ -41,8 +41,11 @@
                     <!-- <th>低於160%</th>
                     <td class="col-r">無法借新還舊</td> -->
                     <th>質押年利率(%)</th>
-                    <td><input placeholder="填入年利率" type="number" v-model="entry.apr"
-                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
+                    <td><input placeholder="填入年利率" type="text" v-model="entry.apr" onkeyup="value=value.replace(/[^0-9.]/g, '')    
+                        .replace(/^0+(?=\d)/, '')                     
+                        .replace(/^\./, '0.')                         
+                        .replace(/(\.\d{2})\d+/, '$1')                 
+                        .replace(/(\.\d{0,2})\..*/, '$1')" @keyup=calc()></td>
                 </tr>
                 <tr>
                     <th>維持率140%最低市值(萬)</th>
@@ -95,7 +98,7 @@
 
                 // 提示
                 const tip = ref({
-                    lower140: false,
+                    lower140: true,
                     lower160: false,
                 });
 
@@ -107,9 +110,9 @@
                     Object.keys(show.value).forEach(key => {
                         show.value[key] = 0;
                     });
-                    Object.keys(tip.value).forEach(key => {
-                        tip.value[key] = false;
-                    });
+
+                    tip.value.lower140 = true;
+                    tip.value.lower160 = false;
                 }
 
                 // 計算
@@ -129,7 +132,7 @@
                     const lowestPrice160 = shares > 0 ? lowestMarketValue160 / (shares * 0.1) : 0;
                     const lowestPrice140 = shares > 0 ? lowestMarketValue140 / (shares * 0.1) : 0;
 
-                    const annualInterest = pledge * apr / 100;
+                    const annualInterest = pledge * (apr.replace(/^(\.|\.\d)/, '0.').replace(/(\.\d*)\./g, '$1').replace(/(\.\d{2})\d+/, '$1')) / 100;
 
                     show.value.market = marketValue;
                     show.value.maxloan = maxLoan;
