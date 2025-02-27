@@ -36,27 +36,36 @@
                 <tr>
                     <th>維持率160%最低市值(萬)</th>
                     <td>{{show.lowest160_market.toFixed(2)}}</td>
-                    <th>最低股價</th>
+                    <th>維持率160%最低股價</th>
                     <td>{{show.lowest160_price.toFixed(1)}}</td>
-                    <th>低於160%</th>
-                    <td class="col-r">無法借新還舊</td>
+                    <!-- <th>低於160%</th>
+                    <td class="col-r">無法借新還舊</td> -->
+                    <th>質押年利率(%)</th>
+                    <td><input placeholder="填入年利率" type="number" v-model="entry.apr"
+                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
                 </tr>
                 <tr>
                     <th>維持率140%最低市值(萬)</th>
                     <td>{{show.lowest140_market.toFixed(2)}}</td>
-                    <th>最低股價</th>
+                    <th>維持率140%最低股價</th>
                     <td>{{show.lowest140_price.toFixed(1)}}</td>
-                    <th>低於140%</th>
-                    <td class="col-r">面臨追繳</td>
+                    <!-- <th>低於140%</th>
+                    <td class="col-r">面臨追繳</td> -->
+                    <th>質借年利息(萬)</th>
+                    <td colspan="3">{{show.interest.toFixed(2)}}</td>
                 </tr>
-                <tr>
+                <!-- <tr>
                     <th>質押年利率(%)</th>
                     <td><input placeholder="填入年利率" type="number" v-model="entry.apr"
                             onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
                     <th>質借年利息(萬)</th>
                     <td colspan="3">{{show.interest.toFixed(2)}}</td>
-                </tr>
+                </tr> -->
             </table>
+            <div class="tip">
+                <span v-if="tip.lower140">注意：維持率低於140%，將面臨追繳</span>
+                <span v-if="tip.lower160">注意：維持率低於160%，無法借新還舊</span>
+            </div>
             <div class="clear" @click="clear()">清空</div>
         </div>
     </div>
@@ -84,6 +93,12 @@
                     interest: 0
                 });
 
+                // 提示
+                const tip = ref({
+                    lower140: false,
+                    lower160: false,
+                });
+
                 // 清除資料
                 function clear(channel, userDevice) {
                     Object.keys(entry.value).forEach(key => {
@@ -91,6 +106,9 @@
                     });
                     Object.keys(show.value).forEach(key => {
                         show.value[key] = 0;
+                    });
+                    Object.keys(tip.value).forEach(key => {
+                        tip.value[key] = false;
                     });
                 }
 
@@ -121,12 +139,24 @@
                     show.value.lowest140_market = lowestMarketValue140;
                     show.value.lowest140_price = lowestPrice140;
                     show.value.interest = annualInterest;
+
+                    if (maintainRate < 140) {
+                        tip.value.lower140 = true;
+                        tip.value.lower160 = false;
+                    } else if (maintainRate >= 140 && maintainRate < 160) {
+                        tip.value.lower140 = false;
+                        tip.value.lower160 = true;
+                    } else {
+                        tip.value.lower140 = false;
+                        tip.value.lower160 = false;
+                    }
                 }
 
                 onMounted(async () => { });
                 return {
                     entry,
                     show,
+                    tip,
                     clear,
                     calc
                 };
