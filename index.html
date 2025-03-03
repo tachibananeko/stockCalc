@@ -19,8 +19,8 @@
                     <td><input placeholder="填入張數" type="number" v-model="entry.shares"
                             onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
                     <th>收盤價</th>
-                    <td><input placeholder="填入收盤價" type="number" v-model="entry.closing"
-                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
+                    <td><input placeholder="填入收盤價" type="text" v-model="entry.closing"
+                            onkeyup="value=value.replace(/[^0-9.]/g, '')" @keyup=calc()></td>
                     <th>市值(萬)</th>
                     <td>{{show.market.toFixed(2)}}</td>
                 </tr>
@@ -38,38 +38,21 @@
                     <td>{{show.lowest160_market.toFixed(2)}}</td>
                     <th>維持率160%最低股價</th>
                     <td>{{show.lowest160_price.toFixed(1)}}</td>
-                    <!-- <th>低於160%</th>
-                    <td class="col-r">無法借新還舊</td> -->
                     <th>質押年利率(%)</th>
-                    <td><input placeholder="填入年利率" type="text" v-model="entry.apr" onkeyup="value=value.replace(/[^0-9.]/g, '')    
-                        .replace(/^0+(?=\d)/, '')                     
-                        .replace(/^\./, '0.')                         
-                        .replace(/(\.\d{2})\d+/, '$1')                 
-                        .replace(/(\.\d{0,2})\..*/, '$1')" @keyup=calc()></td>
+                    <td><input placeholder="填入年利率" type="text" v-model="entry.apr" 
+                        onkeyup="value=value.replace(/[^0-9.]/g, '')" @keyup=calc()></td>
                 </tr>
                 <tr>
                     <th>維持率140%最低市值(萬)</th>
                     <td>{{show.lowest140_market.toFixed(2)}}</td>
                     <th>維持率140%最低股價</th>
                     <td>{{show.lowest140_price.toFixed(1)}}</td>
-                    <!-- <th>低於140%</th>
-                    <td class="col-r">面臨追繳</td> -->
                     <th>質借年利息(萬)</th>
                     <td colspan="3">{{show.interest.toFixed(2)}}</td>
                 </tr>
-                <!-- <tr>
-                    <th>質押年利率(%)</th>
-                    <td><input placeholder="填入年利率" type="number" v-model="entry.apr"
-                            onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
-                    <th>質借年利息(萬)</th>
-                    <td colspan="3">{{show.interest.toFixed(2)}}</td>
-                </tr> -->
             </table>
-            <div class="tip">
-                <span v-if="tip.lower140">注意：維持率低於140%，將面臨追繳</span>
-                <span v-if="tip.lower160">注意：維持率低於160%，無法借新還舊</span>
-            </div>
             <div class="clear" @click="clear()">清空</div>
+            <div class="tip">※注意：維持率低於140%，將面臨追繳；維持率低於160%，無法借新還舊</div>
         </div>
     </div>
     <script>
@@ -96,12 +79,6 @@
                     interest: 0
                 });
 
-                // 提示
-                const tip = ref({
-                    lower140: true,
-                    lower160: false,
-                });
-
                 // 清除資料
                 function clear(channel, userDevice) {
                     Object.keys(entry.value).forEach(key => {
@@ -110,9 +87,6 @@
                     Object.keys(show.value).forEach(key => {
                         show.value[key] = 0;
                     });
-
-                    tip.value.lower140 = true;
-                    tip.value.lower160 = false;
                 }
 
                 // 計算
@@ -132,7 +106,7 @@
                     const lowestPrice160 = shares > 0 ? lowestMarketValue160 / (shares * 0.1) : 0;
                     const lowestPrice140 = shares > 0 ? lowestMarketValue140 / (shares * 0.1) : 0;
 
-                    const annualInterest = pledge * (apr.replace(/^(\.|\.\d)/, '0.').replace(/(\.\d*)\./g, '$1').replace(/(\.\d{2})\d+/, '$1')) / 100;
+                    const annualInterest = pledge * apr / 100;
 
                     show.value.market = marketValue;
                     show.value.maxloan = maxLoan;
@@ -142,24 +116,12 @@
                     show.value.lowest140_market = lowestMarketValue140;
                     show.value.lowest140_price = lowestPrice140;
                     show.value.interest = annualInterest;
-
-                    if (maintainRate < 140) {
-                        tip.value.lower140 = true;
-                        tip.value.lower160 = false;
-                    } else if (maintainRate >= 140 && maintainRate < 160) {
-                        tip.value.lower140 = false;
-                        tip.value.lower160 = true;
-                    } else {
-                        tip.value.lower140 = false;
-                        tip.value.lower160 = false;
-                    }
                 }
 
                 onMounted(async () => { });
                 return {
                     entry,
                     show,
-                    tip,
                     clear,
                     calc
                 };
