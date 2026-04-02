@@ -31,7 +31,7 @@
                     <td><input placeholder="填入質借金額" type="number" v-model="entry.pledge"
                             onkeyup="value=value.replace(/\D|^0/g,'')" @keyup=calc()></td>
                     <th>維持率</th>
-                    <td>{{show.maintain.toFixed(2)}}%</td>
+                    <td>{{ show.maintain.toFixed(0) >= 999 ? 999 : show.maintain.toFixed(0) }}%</td>
                 </tr>
                 <tr>
                     <th>維持率160%最低市值(萬)</th>
